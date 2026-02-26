@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multi-Account Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-elevated: #1e293b;
+      --bg-soft: #111827;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --danger: #f97373;
+      --border-soft: rgba(148, 163, 184, 0.25);
+      --card-radius: 18px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
+      --nav-bg: rgba(15, 23, 42, 0.95);
+      --input-bg: #020617;
+    }
+
+    body.light {
+      --bg: #f3f4f6;
+      --bg-elevated: #ffffff;
+      --bg-soft: #e5e7eb;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --danger: #ef4444;
+      --border-soft: rgba(148, 163, 184, 0.45);
+      --card-radius: 18px;
+      --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.25);
+      --nav-bg: rgba(255, 255, 255, 0.96);
+      --input-bg: #f9fafb;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, var(--bg) 52%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      padding-bottom: env(safe-area-inset-bottom, 12px);
+    }
+
+    .phone-frame {
+      flex: 1;
+      background: linear-gradient(145deg, #020617, #020617 24%, #020617 100%);
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+    }
+
+    body.light .phone-frame {
+      background: radial-gradient(circle at top, #e5e7eb 0, var(--bg) 68%);
+      border-color: rgba(148, 163, 184, 0.4);
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.2);
+    }
+
+    .status-notch {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .notch-pill {
+      width: 110px;
+      height: 18px;
+      background: #020617;
+      border-radius: 999px;
+    }
+
+    body.light .notch-pill {
+      background: #0f172a;
+    }
+
+    .app-inner {
+      position: absolute;
+      inset: 26px 0 0 0;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), var(--bg));
+    }
+
+    body.light .app-inner {
+      background: linear-gradient(180deg, rgba(243, 244, 246, 0.98), var(--bg));
+    }
+
+    .app-header {
+      padding: 16px 18px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .app-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-title span.label {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .app-title span.name {
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    .app-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    body.light .chip {
+      border-color: rgba(37, 99, 235, 0.18);
+    }
+
+    .avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: linear-gradient(145deg, var(--accent), #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.9);
+    }
+
+    body.light .avatar {
+      box-shadow: 0 0 0 2px rgba(243, 244, 246, 1);
+    }
+
+    main {
+      flex: 1;
+      padding: 6px 18px 70px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .total-card {
+      background: radial-gradient(circle at top left, var(--accent-soft), var(--bg-elevated));
+      border-radius: 22px;
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      margin-bottom: 16px;
+    }
+
+    .total-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .total-label-group span {
+      display: block;
+    }
+
+    .total-label-group .kicker {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .total-label-group .headline {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .base-currency-pill {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    body.light .base-currency-pill {
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .total-amount {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 2px;
+    }
+
+    .total-subline {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .freshness-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .freshness-text {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .accounts-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 0 6px;
+    }
+
+    .accounts-section-header h2 {
+      font-size: 14px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .pill-filter {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-filter button {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .pill-filter button.active {
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+    }
+
+    .accounts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .account-card {
+      background: var(--bg-elevated);
+      border-radius: var(--card-radius);
+      padding: 10px 11px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 1px solid var(--border-soft);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.08s ease,
+        background 0.08s ease;
+    }
+
+    .account-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.8);
+      border-color: rgba(56, 189, 248, 0.8);
+      background: linear-gradient(135deg, var(--bg-elevated), #020617);
+    }
+
+    body.light .account-card:hover {
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+      background: linear-gradient(135deg, var(--bg-elevated), #eff6ff);
+    }
+
+    .account-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, var(--accent), #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e5e7eb;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    body.light .account-icon {
+      background: radial-gradient(circle at top left, var(--accent), #1d4ed8);
+      color: #eff6ff;
+    }
+
+    .account-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .account-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .account-name {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .account-balance {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .account-subline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .account-subline span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .account-base-converted {
+      font-size: 11px;
+      color: var(--accent);
+    }
+
+    .empty-state {
+      margin-top: 18px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .fab {
+      position: absolute;
+      bottom: 70px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f9fafb;
+      border: none;
+      box-shadow: 0 18px 38px rgba(37, 99, 235, 0.7);
+      cursor: pointer;
+      font-size: 26px;
+      font-weight: 400;
+    }
+
+    .fab:active {
+      transform: translateY(1px) scale(0.97);
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      background: var(--nav-bg);
+      border-top: 1px solid rgba(15, 23, 42, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding-bottom: env(safe-area-inset-bottom, 4px);
+    }
+
+    body.light .bottom-nav {
+      border-top-color: rgba(148, 163, 184, 0.9);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      width: 64px;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .nav-item-icon {
+      font-size: 18px;
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 18px 22px;
+      z-index: 20;
+    }
+
+    .sheet-overlay.visible {
+      display: flex;
+    }
+
+    .sheet {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-elevated);
+      border-radius: 22px;
+      padding: 12px 16px 14px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 1);
+      border: 1px solid var(--border-soft);
+      transform: translateY(100%);
+      opacity: 0;
+      transition: transform 0.22s cubic-bezier(0.22, 0.72, 0.28, 1),
+        opacity 0.16s ease-out;
+    }
+
+    .sheet-overlay.visible .sheet {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .sheet-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sheet-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .sheet-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 6px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      margin-bottom: 3px;
+      color: var(--text-muted);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      padding: 7px 9px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--input-bg);
+      color: var(--text);
+      outline: none;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.6);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 52px;
+      max-height: 96px;
+    }
+
+    .sheet-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      color: #f9fafb;
+      flex: 1;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-soft);
+      color: var(--text-muted);
+      padding-inline: 10px;
+    }
+
+    .btn-danger {
+      background: transparent;
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      color: var(--danger);
+      padding-inline: 10px;
+      font-size: 12px;
+    }
+
+    .btn:active {
+      transform: translateY(0.5px) scale(0.98);
+    }
+
+    .settings-screen {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .settings-screen.visible {
+      display: flex;
+    }
+
+    .settings-card {
+      background: var(--bg-elevated);
+      border-radius: 18px;
+      padding: 11px 12px;
+      border: 1px solid var(--border-soft);
+    }
+
+    .settings-card h3 {
+      font-size: 13px;
+      margin: 0 0 4px;
+    }
+
+    .settings-card p {
+      font-size: 11px;
+      margin: 0 0 8px;
+      color: var(--text-muted);
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    .settings-row select {
+      min-width: 90px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 42px;
+      height: 22px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.6);
+      cursor: pointer;
+      transition: background 0.16s ease-out;
+      flex-shrink: 0;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: #f9fafb;
+      transition: transform 0.18s cubic-bezier(0.22, 0.72, 0.28, 1);
+    }
+
+    .toggle.on {
+      background: var(--accent);
+    }
+
+    .toggle.on .toggle-thumb {
+      transform: translateX(20px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.5);
+      border-radius: 999px;
+    }
+
+    @media (max-width: 520px) {
+      .app-shell {
+        padding: 0;
+      }
+      .phone-frame {
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+      }
+      .status-notch {
+        display: none;
+      }
+      .app-inner {
+        inset: 0;
+      }
+    }
+  </style>
+</head>
+<body class="">
+  <div class="app-shell">
+    <div class="phone-frame">
+      <div class="status-notch">
+        <div class="notch-pill"></div>
+      </div>
+      <div class="app-inner">
+        <header class="app-header">
+          <div class="app-title">
+            <span class="label">MULTI-ACCOUNT</span>
+            <span class="name">Balance Hub</span>
+          </div>
+          <div class="app-header-actions">
+            <div class="chip" id="accountsCountChip">4 accounts</div>
+            <div class="avatar">≈</div>
+          </div>
+        </header>
+
+        <main>
+          <section id="dashboardScreen">
+            <div class="total-card">
+              <div class="total-card-header">
+                <div class="total-label-group">
+                  <span class="kicker">NOW</span>
+                  <span class="headline">Total across all accounts</span>
+                </div>
+                <div class="base-currency-pill" id="baseCurrencyPill">
+                  <span>Base:</span>
+                  <strong id="baseCurrencyLabel">USD</strong>
+                </div>
+              </div>
+              <div class="total-amount" id="totalBalanceDisplay">$0.00</div>
+              <div class="total-subline">
+                <div class="freshness-text">
+                  <span class="freshness-dot"></span>
+                  <span id="freshnessLabel">Demo data · local only</span>
+                </div>
+                <span id="lastSnapshotLabel">Last snapshot: —</span>
+              </div>
+            </div>
+
+            <div class="accounts-section-header">
+              <h2>Accounts</h2>
+              <div class="pill-filter">
+                <button type="button" class="active" data-filter="all">All</button>
+                <button type="button" data-filter="fiat">Fiat</button>
+                <button type="button" data-filter="crypto">Crypto</button>
+              </div>
+            </div>
+
+            <div class="accounts-list" id="accountsList"></div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+              <strong>No accounts yet</strong>
+              Add your first Wise, Revolut, PayPal or crypto wallet using the + button.
+            </div>
+          </section>
+
+          <section id="settingsScreen" class="settings-screen">
+            <div class="settings-card">
+              <h3>Base Currency</h3>
+              <p>Choose the currency used for your total and converted estimates.</p>
+              <div class="settings-row">
+                <span>Display totals in</span>
+                <select id="baseCurrencySelect" class="form-select">
+                  <option value="USD">USD · US Dollar</option>
+                  <option value="EUR">EUR · Euro</option>
+                  <option value="AUD">AUD · Australian Dollar</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>Appearance</h3>
+              <p>Switch between a dark studio and a light workspace.</p>
+              <div class="settings-row">
+                <span>Dark mode</span>
+                <div id="themeToggle" class="toggle on">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>About this demo</h3>
+              <p>
+                This is an MVP prototype. All balances are stored in memory only,
+                and nothing is sent anywhere. Perfect for concept testing.
+              </p>
+            </div>
+          </section>
+        </main>
+
+        <button class="fab" id="fabAdd">+</button>
+
+        <nav class="bottom-nav">
+          <div class="nav-item active" data-screen="dashboard">
+            <div class="nav-item-icon">📊</div>
+            <div>Dashboard</div>
+          </div>
+          <div class="nav-item" data-screen="settings">
+            <div class="nav-item-icon">⚙️</div>
+            <div>Settings</div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Account Sheet -->
+  <div class="sheet-overlay" id="sheetOverlay">
+    <div class="sheet">
+      <div class="sheet-header">
+        <div>
+          <div class="sheet-title" id="sheetTitle">Add account</div>
+        </div>
+        <button class="sheet-close-btn" id="sheetCloseBtn" aria-label="Close">&times;</button>
+      </div>
+      <div class="sheet-subtitle" id="sheetSubtitle">
+        Manually track balances from Wise, Revolut, PayPal, crypto and more.
+      </div>
+
+      <form id="accountForm">
+        <input type="hidden" id="accountId" />
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="accountName">Account name</label>
+            <input
+              id="accountName"
+              class="form-input"
+              type="text"
+              placeholder="e.g. Wise Main"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accountProvider">Provider</label>
+            <input
+              id="accountProvider"
+              class="form-input"
+              type="text"
+              placeholder="Wise, Revolut, PayPal, etc."
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="accountType">Type</label>
+            <select id="accountType" class="form-select">
+              <option value="Fintech">Fintech</option>
+              <option value="Bank">Bank</option>
+              <option value="Crypto">Crypto</option>
+              <option value="Brokerage">Brokerage</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accountCurrency">Currency</label>
+            <select id="accountCurrency" class="form-select" required>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="AUD">AUD</option>
+              <option value="BTC">BTC</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label" for="accountBalance">Current balance</label>
+            <input
+              id="accountBalance"
+              class="form-input"
+              type="number"
+              step="0.00000001"
+              min="0"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accountLastUpdated">Last updated</label>
+            <input
+              id="accountLastUpdated"
+              class="form-input"
+              type="date"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="accountNotes">Notes (optional)</label>
+          <textarea
+            id="accountNotes"
+            class="form-textarea"
+            placeholder="e.g. Primary travel account, bill buffer, long-term hold..."
+          ></textarea>
+        </div>
+
+        <div class="sheet-footer">
+          <button type="button" class="btn btn-secondary" id="resetFormBtn">
+            Clear
+          </button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">
+            <span id="saveBtnLabel">Save account</span>
+          </button>
+        </div>
+        <div class="sheet-footer" id="deleteRow" style="justify-content:flex-start; display:none;">
+          <button type="button" class="btn btn-danger" id="deleteBtn">
+            Delete account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      baseCurrency: "USD",
+      theme: "dark",
+      filter: "all",
+      accounts: [
+        {
+          id: "acc-1",
+          name: "Wise Main",
+          provider: "Wise",
+          type: "Fintech",
+          currency: "USD",
+          balance: 2310.25,
+          lastUpdated: "2026-02-20",
+          notes: "Primary travel money account."
+        },
+        {
+          id: "acc-2",
+          name: "Revolut EUR",
+          provider: "Revolut",
+          type: "Fintech",
+          currency: "EUR",
+          balance: 830.5,
+          lastUpdated: "2026-02-18",
+          notes: "EU expenses and subscriptions."
+        },
+        {
+          id: "acc-3",
+          name: "PayPal",
+          provider: "PayPal",
+          type: "Payments",
+          currency: "USD",
+          balance: 410.0,
+          lastUpdated: "2026-02-22",
+          notes: ""
+        },
+        {
+          id: "acc-4",
+          name: "BTC Wallet",
+          provider: "Hardware Wallet",
+          type: "Crypto",
+          currency: "BTC",
+          balance: 0.0421,
+          lastUpdated: "2026-02-15",
+          notes: "Long-term hold."
+        }
+      ]
+    };
+
+    const fxRates = {
+      USD: 1,
+      EUR: 1.08,
+      AUD: 0.66,
+      BTC: 60000
+    };
+
+    const el = {
+      accountsList: document.getElementById("accountsList"),
+      accountsCountChip: document.getElementById("accountsCountChip"),
+      totalBalanceDisplay: document.getElementById("totalBalanceDisplay"),
+      baseCurrencyPill: document.getElementById("baseCurrencyPill"),
+      baseCurrencyLabel: document.getElementById("baseCurrencyLabel"),
+      baseCurrencySelect: document.getElementById("baseCurrencySelect"),
+      lastSnapshotLabel: document.getElementById("lastSnapshotLabel"),
+      emptyState: document.getElementById("emptyState"),
+      fabAdd: document.getElementById("fabAdd"),
+      sheetOverlay: document.getElementById("sheetOverlay"),
+      sheetTitle: document.getElementById("sheetTitle"),
+      sheetSubtitle: document.getElementById("sheetSubtitle"),
+      sheetCloseBtn: document.getElementById("sheetCloseBtn"),
+      accountForm: document.getElementById("accountForm"),
+      accountId: document.getElementById("accountId"),
+      accountName: document.getElementById("accountName"),
+      accountProvider: document.getElementById("accountProvider"),
+      accountType: document.getElementById("accountType"),
+      accountCurrency: document.getElementById("accountCurrency"),
+      accountBalance: document.getElementById("accountBalance"),
+      accountLastUpdated: document.getElementById("accountLastUpdated"),
+      accountNotes: document.getElementById("accountNotes"),
+      resetFormBtn: document.getElementById("resetFormBtn"),
+      deleteBtn: document.getElementById("deleteBtn"),
+      deleteRow: document.getElementById("deleteRow"),
+      saveBtn: document.getElementById("saveBtn"),
+      saveBtnLabel: document.getElementById("saveBtnLabel"),
+      navItems: document.querySelectorAll(".nav-item"),
+      dashboardScreen: document.getElementById("dashboardScreen"),
+      settingsScreen: document.getElementById("settingsScreen"),
+      themeToggle: document.getElementById("themeToggle"),
+      freshnessLabel: document.getElementById("freshnessLabel"),
+      filterButtons: document.querySelectorAll(".pill-filter button")
+    };
+
+    function formatMoney(amount, currency) {
+      if (currency === "BTC") {
+        return "₿" + amount.toFixed(5);
+      }
+      try {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency
+        }).format(amount);
+      } catch (e) {
+        return amount.toFixed(2) + " " + currency;
+      }
+    }
+
+    function convertToBase(amount, fromCurrency, baseCurrency) {
+      if (!fxRates[fromCurrency] || !fxRates[baseCurrency]) return null;
+      const inUsd = amount * fxRates[fromCurrency];
+      const baseAmount = inUsd / fxRates[baseCurrency];
+      return baseAmount;
+    }
+
+    function getAccountIconEmoji(account) {
+      if (account.type === "Crypto" || account.currency === "BTC") return "₿";
+      if (account.provider.toLowerCase().includes("wise")) return "🟦";
+      if (account.provider.toLowerCase().includes("revolut")) return "🌀";
+      if (account.provider.toLowerCase().includes("paypal")) return "💸";
+      if (account.type === "Bank") return "🏦";
+      if (account.type === "Brokerage") return "📈";
+      return "💰";
+    }
+
+    function getFilterPredicate() {
+      switch (state.filter) {
+        case "fiat":
+          return (acc) => acc.currency !== "BTC";
+        case "crypto":
+          return (acc) => acc.currency === "BTC" || acc.type === "Crypto";
+        default:
+          return () => true;
+      }
+    }
+
+    function renderDashboard() {
+      const accounts = state.accounts.slice().sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      const filterFn = getFilterPredicate();
+      const filtered = accounts.filter(filterFn);
+
+      el.accountsList.innerHTML = "";
+      if (filtered.length === 0) {
+        el.emptyState.style.display = "block";
+      } else {
+        el.emptyState.style.display = "none";
+      }
+
+      let totalBase = 0;
+      let hasConvertible = false;
+      let latestDate = null;
+
+      accounts.forEach((acc) => {
+        const converted = convertToBase(
+          acc.balance,
+          acc.currency,
+          state.baseCurrency
+        );
+        if (converted != null) {
+          totalBase += converted;
+          hasConvertible = true;
+        }
+        if (acc.lastUpdated) {
+          const d = new Date(acc.lastUpdated);
+          if (!isNaN(d.getTime())) {
+            if (!latestDate || d > latestDate) latestDate = d;
+          }
+        }
+      });
+
+      if (hasConvertible) {
+        const formatted = formatMoney(totalBase, state.baseCurrency);
+        el.totalBalanceDisplay.textContent = formatted;
+      } else {
+        el.totalBalanceDisplay.textContent = "—";
+      }
+
+      if (latestDate) {
+        el.lastSnapshotLabel.textContent =
+          "Latest update: " + latestDate.toISOString().slice(0, 10);
+      } else {
+        el.lastSnapshotLabel.textContent = "Latest update: —";
+      }
+
+      el.accountsCountChip.textContent =
+        state.accounts.length + (state.accounts.length === 1 ? " account" : " accounts");
+      el.baseCurrencyLabel.textContent = state.baseCurrency;
+      const baseLabel = "Base: " + state.baseCurrency;
+      el.baseCurrencyPill.title = baseLabel;
+
+      filtered.forEach((acc) => {
+        const card = document.createElement("div");
+        card.className = "account-card";
+        card.dataset.id = acc.id;
+
+        const icon = document.createElement("div");
+        icon.className = "account-icon";
+        icon.textContent = getAccountIconEmoji(acc);
+
+        const main = document.createElement("div");
+        main.className = "account-main";
+
+        const nameRow = document.createElement("div");
+        nameRow.className = "account-name-row";
+
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "account-name";
+        nameSpan.textContent = acc.name;
+
+        const balanceSpan = document.createElement("div");
+        balanceSpan.className = "account-balance";
+        balanceSpan.textContent = formatMoney(acc.balance, acc.currency);
+
+        nameRow.appendChild(nameSpan);
+        nameRow.appendChild(balanceSpan);
+
+        const subline = document.createElement("div");
+        subline.className = "account-subline";
+
+        const leftMeta = document.createElement("span");
+        leftMeta.textContent =
+          acc.provider +
+          " • " +
+          (acc.lastUpdated || "Not updated");
+
+        const convertedSpan = document.createElement("span");
+        const converted = convertToBase(
+          acc.balance,
+          acc.currency,
+          state.baseCurrency
+        );
+        if (
+          converted != null &&
+          (acc.currency !== state.baseCurrency || acc.currency === "BTC")
+        ) {
+          convertedSpan.className = "account-base-converted";
+          convertedSpan.textContent =
+            "~ " + formatMoney(converted, state.baseCurrency);
+        } else {
+          convertedSpan.textContent = "";
+        }
+
+        subline.appendChild(leftMeta);
+        subline.appendChild(convertedSpan);
+
+        main.appendChild(nameRow);
+        main.appendChild(subline);
+
+        card.appendChild(icon);
+        card.appendChild(main);
+
+        card.addEventListener("click", () => {
+          openSheetForEdit(acc.id);
+        });
+
+        el.accountsList.appendChild(card);
+      });
+    }
+
+    function openSheet() {
+      el.sheetOverlay.classList.add("visible");
+    }
+
+    function closeSheet() {
+      el.sheetOverlay.classList.remove("visible");
+      setTimeout(() => {
+        el.accountForm.reset();
+        el.accountId.value = "";
+      }, 200);
+    }
+
+    function openSheetForCreate() {
+      el.accountForm.reset();
+      el.accountId.value = "";
+      el.sheetTitle.textContent = "Add account";
+      el.sheetSubtitle.textContent =
+        "Add a Wise, Revolut, PayPal, bank or crypto account to your dashboard.";
+      el.saveBtnLabel.textContent = "Save account";
+      el.deleteRow.style.display = "none";
+
+      const today = new Date().toISOString().slice(0, 10);
+      el.accountLastUpdated.value = today;
+
+      openSheet();
+      el.accountName.focus();
+    }
+
+    function openSheetForEdit(id) {
+      const acc = state.accounts.find((a) => a.id === id);
+      if (!acc) return;
+      el.accountId.value = acc.id;
+      el.accountName.value = acc.name;
+      el.accountProvider.value = acc.provider;
+      el.accountType.value = acc.type || "Fintech";
+      el.accountCurrency.value = acc.currency;
+      el.accountBalance.value = acc.balance;
+      el.accountLastUpdated.value = acc.lastUpdated || "";
+      el.accountNotes.value = acc.notes || "";
+
+      el.sheetTitle.textContent = "Edit account";
+      el.sheetSubtitle.textContent =
+        "Update the balance, currency or notes for this account.";
+      el.saveBtnLabel.textContent = "Save changes";
+      el.deleteRow.style.display = "flex";
+
+      openSheet();
+    }
+
+    function handleFormSubmit(evt) {
+      evt.preventDefault();
+      const id = el.accountId.value.trim();
+      const name = el.accountName.value.trim();
+      const provider = el.accountProvider.value.trim();
+      const type = el.accountType.value;
+      const currency = el.accountCurrency.value;
+      const balance = parseFloat(el.accountBalance.value);
+      const lastUpdated = el.accountLastUpdated.value;
+      const notes = el.accountNotes.value.trim();
+
+      if (!name || !provider || isNaN(balance)) return;
+
+      if (id) {
+        const idx = state.accounts.findIndex((a) => a.id === id);
+        if (idx !== -1) {
+          state.accounts[idx] = {
+            ...state.accounts[idx],
+            name,
+            provider,
+            type,
+            currency,
+            balance,
+            lastUpdated,
+            notes
+          };
+        }
+      } else {
+        const newId = "acc-" + Date.now();
+        state.accounts.push({
+          id: newId,
+          name,
+          provider,
+          type,
+          currency,
+          balance,
+          lastUpdated,
+          notes
+        });
+      }
+
+      renderDashboard();
+      closeSheet();
+    }
+
+    function handleDelete() {
+      const id = el.accountId.value.trim();
+      if (!id) return;
+      const acc = state.accounts.find((a) => a.id === id);
+      const name = acc ? acc.name : "this account";
+      if (!confirm("Delete \"" + name + "\" from your dashboard?")) return;
+      state.accounts = state.accounts.filter((a) => a.id !== id);
+      renderDashboard();
+      closeSheet();
+    }
+
+    function setScreen(screen) {
+      if (screen === "settings") {
+        el.dashboardScreen.style.display = "none";
+        el.settingsScreen.classList.add("visible");
+      } else {
+        el.dashboardScreen.style.display = "block";
+        el.settingsScreen.classList.remove("visible");
+      }
+      el.navItems.forEach((item) => {
+        const s = item.dataset.screen;
+        item.classList.toggle("active", s === screen);
+      });
+    }
+
+    function applyTheme() {
+      if (state.theme === "dark") {
+        document.body.classList.remove("light");
+        el.themeToggle.classList.add("on");
+      } else {
+        document.body.classList.add("light");
+        el.themeToggle.classList.remove("on");
+      }
+    }
+
+    function initEventListeners() {
+      el.fabAdd.addEventListener("click", openSheetForCreate);
+      el.sheetCloseBtn.addEventListener("click", closeSheet);
+      el.sheetOverlay.addEventListener("click", (e) => {
+        if (e.target === el.sheetOverlay) {
+          closeSheet();
+        }
+      });
+
+      el.accountForm.addEventListener("submit", handleFormSubmit);
+      el.deleteBtn.addEventListener("click", handleDelete);
+      el.resetFormBtn.addEventListener("click", () => {
+        const id = el.accountId.value;
+        if (id) {
+          openSheetForEdit(id);
+        } else {
+          openSheetForCreate();
+        }
+      });
+
+      el.navItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const screen = item.dataset.screen;
+          setScreen(screen);
+        });
+      });
+
+      el.baseCurrencySelect.addEventListener("change", (e) => {
+        state.baseCurrency = e.target.value;
+        renderDashboard();
+      });
+
+      el.themeToggle.addEventListener("click", () => {
+        state.theme = state.theme === "dark" ? "light" : "dark";
+        applyTheme();
+      });
+
+      el.filterButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          el.filterButtons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.filter = btn.dataset.filter;
+          renderDashboard();
+        });
+      });
+    }
+
+    function init() {
+      state.theme = "dark";
+      state.baseCurrency = "USD";
+      applyTheme();
+      el.baseCurrencySelect.value = state.baseCurrency;
+      el.freshnessLabel.textContent = "Demo data · local only";
+      initEventListeners();
+      renderDashboard();
+    }
+
+    init();
+  </script>
+</body>
+</html>
